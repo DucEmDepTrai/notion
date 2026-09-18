@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Task Manager</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f5f5;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        /* Add task */
+
+        .task-form {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 10px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            background: #222;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        /* Tasks */
+
+        .tasks {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .task {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-name {
+            font-weight: bold;
+        }
+
+        .date {
+            font-size: 13px;
+            color: #777;
+            margin-top: 5px;
+        }
+
+        .priority {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .q1 {
+            background: #ffd6d6;
+        }
+
+        .q2 {
+            background: #d8f5d0;
+        }
+
+        .q3 {
+            background: #fff0c2;
+        }
+
+        .q4 {
+            background: #e5e5e5;
+        }
+
+        /* Matrix */
+
+        .matrix {
+            margin-top: 40px;
+        }
+
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .quadrant {
+            background: white;
+            min-height: 180px;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .quadrant h3 {
+            margin-bottom: 15px;
+        }
+
+        .matrix-task {
+            padding: 8px;
+            background: #f5f5f5;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        @media(max-width: 800px) {
+            .task-form {
+                grid-template-columns: 1fr;
+            }
+
+            .matrix-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🧠 My Task Manager</h1>
+
+    <!-- ADD TASK -->
+
+    <div class="task-form">
+
+        <input
+            type="text"
+            id="taskInput"
+            placeholder="What needs to be done?"
+        >
+
+        <input
+            type="date"
+            id="dateInput"
+        >
+
+        <select id="urgentInput">
+            <option value="false">Not Urgent</option>
+            <option value="true">Urgent</option>
+        </select>
+
+        <select id="importantInput">
+            <option value="false">Not Important</option>
+            <option value="true">Important</option>
+        </select>
+
+        <button onclick="addTask()">Add</button>
+
+    </div>
+
+
+    <!-- ACTIVE TASKS -->
+
+    <h2>📅 Tasks</h2>
+
+    <div id="taskList" class="tasks"></div>
+
+
+    <!-- EISENHOWER MATRIX -->
+
+    <div class="matrix">
+
+        <h2>⚡ Eisenhower Matrix</h2>
+
+        <div class="matrix-grid">
+
+            <div class="quadrant">
+                <h3>🔴 Q1 — Do First</h3>
+                <div id="q1"></div>
+            </div>
+
+            <div class="quadrant">
+                <h3>🟢 Q2 — Schedule</h3>
+                <div id="q2"></div>
+            </div>
+
+            <div class="quadrant">
+                <h3>🟡 Q3 — Delegate</h3>
+                <div id="q3"></div>
+            </div>
+
+            <div class="quadrant">
+                <h3>⚪ Q4 — Eliminate</h3>
+                <div id="q4"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+
+/* ADD TASK */
+
+function addTask() {
+
+    const name = document.getElementById("taskInput").value;
+    const date = document.getElementById("dateInput").value;
+
+    const urgent =
+        document.getElementById("urgentInput").value === "true";
+
+    const important =
+        document.getElementById("importantInput").value === "true";
+
+
+    if (!name.trim()) {
+        alert("Please enter a task.");
+        return;
+    }
+
+
+    const task = {
+
+        id: Date.now(),
+
+        name: name,
+
+        date: date,
+
+        urgent: urgent,
+
+        important: important
+
+    };
+
+
+    tasks.push(task);
+
+    saveTasks();
+
+    render();
+
+
+    document.getElementById("taskInput").value = "";
+
+}
+
+
+/* DETERMINE QUADRANT */
+
+function getQuadrant(task) {
+
+    if (task.urgent && task.important)
+        return "q1";
+
+    if (!task.urgent && task.important)
+        return "q2";
+
+    if (task.urgent && !task.important)
+        return "q3";
+
+    return "q4";
+
+}
+
+
+/* COMPLETE TASK */
+
+function completeTask(id) {
+
+    tasks = tasks.filter(task => task.id !== id);
+
+    saveTasks();
+
+    render();
+
+}
+
+
+/* SAVE */
+
+function saveTasks() {
+
+    localStorage.setItem(
+        "tasks",
+        JSON.stringify(tasks)
+    );
+
+}
+
+
+/* RENDER */
+
+function render() {
+
+    const taskList =
+        document.getElementById("taskList");
+
+
+    taskList.innerHTML = "";
+
+
+    document.getElementById("q1").innerHTML = "";
+    document.getElementById("q2").innerHTML = "";
+    document.getElementById("q3").innerHTML = "";
+    document.getElementById("q4").innerHTML = "";
+
+
+    tasks.forEach(task => {
+
+        const quadrant =
+            getQuadrant(task);
+
+
+        /* TASK LIST */
+
+        const taskElement =
+            document.createElement("div");
+
+        taskElement.className = "task";
+
+
+        taskElement.innerHTML = `
+
+            <input
+                type="checkbox"
+                onchange="completeTask(${task.id})"
+            >
+
+            <div class="task-info">
+
+                <div class="task-name">
+                    ${task.name}
+                </div>
+
+                <div class="date">
+                    📅 ${task.date || "No deadline"}
+                </div>
+
+            </div>
+
+            <span class="priority ${quadrant}">
+                ${quadrant.toUpperCase()}
+            </span>
+
+        `;
+
+
+        taskList.appendChild(taskElement);
+
+
+        /* MATRIX */
+
+        const matrixTask =
+            document.createElement("div");
+
+        matrixTask.className =
+            "matrix-task";
+
+        matrixTask.textContent =
+            task.name;
+
+
+        document
+            .getElementById(quadrant)
+            .appendChild(matrixTask);
+
+    });
+
+}
+
+
+render();
+
+</script>
+
+</body>
+</html>
