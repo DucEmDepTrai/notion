@@ -1,120 +1,389 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <meta name="color-scheme" content="light dark">
     <title>Task Manager</title>
 
     <style>
+        /* ========== DESIGN TOKENS ========== */
+        :root {
+            --bg: #f4f5f7;
+            --surface: #ffffff;
+            --surface-2: #f7f8fa;
+            --border: #e5e7eb;
+            --text: #1c1f26;
+            --text-muted: #6b7280;
+            --accent: #3b5bdb;
+            --accent-soft: #e7ecff;
+            --danger: #e03131;
+            --success: #2f9e44;
+
+            --q1: #ffd6d6; --q1-ink: #a61e1e; --q1-dot: #f03e3e;
+            --q2: #d8f5d0; --q2-ink: #2b7a1f; --q2-dot: #37b24d;
+            --q3: #fff0c2; --q3-ink: #8a6100; --q3-dot: #f59f00;
+            --q4: #e5e7eb; --q4-ink: #4b5563; --q4-dot: #868e96;
+
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 4px 14px rgba(16, 24, 40, .05);
+            --shadow-lg: 0 10px 30px rgba(16, 24, 40, .18);
+            --ease: cubic-bezier(.2, .8, .2, 1);
+        }
+
+        :root[data-theme="dark"] {
+            --bg: #101319;
+            --surface: #181c24;
+            --surface-2: #1f2430;
+            --border: #2a3040;
+            --text: #e8eaf0;
+            --text-muted: #9aa3b5;
+            --accent: #7c93ff;
+            --accent-soft: #232b4d;
+            --danger: #ff6b6b;
+            --success: #51cf66;
+
+            --q1: #4a2224; --q1-ink: #ffb3b3; --q1-dot: #ff6b6b;
+            --q2: #1f3a22; --q2-ink: #a9e8a0; --q2-dot: #51cf66;
+            --q3: #46380f; --q3-ink: #ffdc7a; --q3-dot: #fcc419;
+            --q4: #2c3140; --q4-ink: #b6bdcc; --q4-dot: #868e96;
+            --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 14px rgba(0, 0, 0, .25);
+            --shadow-lg: 0 10px 30px rgba(0, 0, 0, .5);
+        }
+
+        /* ========== BASE ========== */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
         body {
-            background: #f5f5f5;
+            background: var(--bg);
+            color: var(--text);
             padding: 30px;
+            line-height: 1.45;
+            transition: background .25s var(--ease), color .25s var(--ease);
         }
 
-        .container {
-            max-width: 1000px;
-            margin: auto;
+        .container { max-width: 1100px; margin: auto; }
+
+        h1 { font-size: 28px; letter-spacing: -.02em; }
+        h2 { font-size: 20px; margin-bottom: 12px; letter-spacing: -.01em; }
+
+        button, input, select {
+            font-size: 14px;
+            color: var(--text);
         }
 
-        h1 {
-            margin-bottom: 20px;
+        input, select {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface-2);
+            transition: border-color .15s, box-shadow .15s;
+            min-width: 0;
         }
 
-        /* Add task */
-
-        .task-form {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr auto;
-            gap: 10px;
-        }
-
-        input, select, button {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+        input:focus-visible, select:focus-visible, button:focus-visible, .day:focus-visible {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
         }
 
         button {
             cursor: pointer;
             border: none;
-            background: #222;
-            color: white;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            transition: transform .12s var(--ease), opacity .15s, background .15s;
+        }
+        button:hover { opacity: .88; }
+        button:active { transform: scale(.97); }
+
+        button.ghost {
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            font-weight: 500;
+        }
+        button.ghost:hover { background: var(--accent-soft); opacity: 1; }
+
+        button.icon {
+            padding: 6px 8px;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 400;
+            border-radius: 6px;
+        }
+        button.icon:hover { background: var(--surface-2); color: var(--text); opacity: 1; }
+        button.icon.danger:hover { color: var(--danger); }
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
         }
 
-        button:hover {
-            opacity: 0.8;
+        .sr-only {
+            position: absolute; width: 1px; height: 1px; overflow: hidden;
+            clip: rect(0 0 0 0); white-space: nowrap;
         }
 
-        /* Tasks */
-
-        .tasks {
+        /* ========== HEADER ========== */
+        .header {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .header-sub { color: var(--text-muted); font-size: 14px; margin-top: 2px; }
+
+        .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* ========== DASHBOARD ========== */
+        .dashboard {
+            padding: 20px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1.4fr repeat(4, 1fr);
+            gap: 15px;
+            align-items: center;
+        }
+
+        .progress-block .label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .progress-block .label strong { color: var(--text); font-size: 18px; }
+
+        .progress-bar {
+            height: 10px;
+            background: var(--surface-2);
+            border-radius: 99px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            border-radius: 99px;
+            transition: width .6s var(--ease);
+        }
+
+        .stat { text-align: center; }
+        .stat .num { font-size: 24px; font-weight: 700; letter-spacing: -.02em; }
+        .stat .cap { font-size: 12px; color: var(--text-muted); }
+        .stat.warn .num { color: var(--danger); }
+
+        /* ========== ADD TASK ========== */
+        .task-form {
+            padding: 20px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: 2fr 1.1fr .8fr 1fr 1fr 1.1fr auto;
             gap: 10px;
         }
 
+        /* ========== TASK LIST ========== */
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .section-head h2 { margin: 0; }
+
+        .list-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 4px;
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: transparent;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .tab[aria-pressed="true"] { background: var(--accent); color: #fff; }
+        .tab:hover { opacity: 1; background: var(--accent-soft); color: var(--accent); }
+        .tab[aria-pressed="true"]:hover { background: var(--accent); color: #fff; }
+
+        .list-controls input[type="search"] { flex: 1; min-width: 160px; }
+
+        .chip-filter {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--accent-soft); color: var(--accent);
+            padding: 6px 10px; border-radius: 99px; font-size: 13px; font-weight: 600;
+        }
+        .chip-filter button { background: none; color: inherit; padding: 0 2px; font-size: 15px; }
+
+        .tasks { display: flex; flex-direction: column; gap: 10px; }
+
         .task {
-            background: white;
-            padding: 15px;
+            padding: 14px 15px;
             border-radius: 10px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--q4-dot);
+            box-shadow: var(--shadow);
+            animation: slideIn .3s var(--ease);
+            transition: opacity .2s, transform .2s var(--ease);
+        }
+        .task:hover { transform: translateY(-1px); }
+        .task[data-q="q1"] { border-left-color: var(--q1-dot); }
+        .task[data-q="q2"] { border-left-color: var(--q2-dot); }
+        .task[data-q="q3"] { border-left-color: var(--q3-dot); }
+        .task[data-q="q4"] { border-left-color: var(--q4-dot); }
+        .task.done { opacity: .55; }
+        .task.done .task-name { text-decoration: line-through; }
+
+        .task input[type="checkbox"] {
+            width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
         }
 
-        .task-info {
-            flex: 1;
-        }
+        .task-info { flex: 1; min-width: 0; }
 
         .task-name {
-            font-weight: bold;
+            font-weight: 600;
+            overflow-wrap: anywhere;
         }
 
         .date {
             font-size: 13px;
-            color: #777;
-            margin-top: 5px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
+        .date .overdue { color: var(--danger); font-weight: 600; }
+        .date .soon { color: var(--q3-ink); font-weight: 600; }
 
         .priority {
             padding: 5px 10px;
             border-radius: 20px;
             font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
         }
 
-        .q1 {
-            background: #ffd6d6;
+        .q1 { background: var(--q1); color: var(--q1-ink); }
+        .q2 { background: var(--q2); color: var(--q2-ink); }
+        .q3 { background: var(--q3); color: var(--q3-ink); }
+        .q4 { background: var(--q4); color: var(--q4-ink); }
+
+        .task-actions { display: flex; gap: 2px; }
+
+        .empty {
+            text-align: center;
+            padding: 36px 20px;
+            color: var(--text-muted);
+            background: var(--surface);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+        }
+        .empty .big { font-size: 32px; margin-bottom: 6px; }
+
+        /* ========== CALENDAR ========== */
+        .calendar-section { margin-top: 40px; }
+
+        .calendar { padding: 18px; }
+
+        .cal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+        .cal-title { font-weight: 700; font-size: 16px; text-transform: capitalize; }
+        .cal-nav { display: flex; gap: 6px; }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
         }
 
-        .q2 {
-            background: #d8f5d0;
+        .dow {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding-bottom: 4px;
         }
 
-        .q3 {
-            background: #fff0c2;
+        .day {
+            min-height: 68px;
+            border-radius: 8px;
+            background: var(--surface-2);
+            border: 1px solid transparent;
+            padding: 6px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: background .15s, border-color .15s;
+            text-align: left;
+            color: var(--text);
+            font-weight: 400;
+            align-items: flex-start;
+            justify-content: flex-start;
         }
-
-        .q4 {
-            background: #e5e5e5;
+        .day:hover { background: var(--accent-soft); opacity: 1; }
+        .day.out { opacity: .4; }
+        .day.today { border-color: var(--accent); }
+        .day.today .dnum { background: var(--accent); color: #fff; }
+        .day.selected { background: var(--accent-soft); border-color: var(--accent); }
+        .dnum {
+            font-size: 12px; font-weight: 600;
+            width: 22px; height: 22px; border-radius: 50%;
+            display: grid; place-items: center;
         }
+        .dots { display: flex; gap: 3px; flex-wrap: wrap; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; }
+        .dot.q1 { background: var(--q1-dot); }
+        .dot.q2 { background: var(--q2-dot); }
+        .dot.q3 { background: var(--q3-dot); }
+        .dot.q4 { background: var(--q4-dot); }
+        .more { font-size: 10px; color: var(--text-muted); }
 
-        /* Matrix */
-
-        .matrix {
-            margin-top: 40px;
-        }
+        /* ========== MATRIX ========== */
+        .matrix { margin-top: 40px; }
 
         .matrix-grid {
             display: grid;
@@ -124,32 +393,107 @@
         }
 
         .quadrant {
-            background: white;
             min-height: 180px;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: var(--radius);
+            background: var(--surface);
+            border: 2px solid transparent;
+            box-shadow: var(--shadow);
+            transition: border-color .15s, background .15s;
         }
+        .quadrant.drag-over { border-color: var(--accent); background: var(--accent-soft); }
 
         .quadrant h3 {
             margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
         }
+        .quadrant h3 .count {
+            font-size: 12px; background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 99px; padding: 2px 9px; color: var(--text-muted);
+        }
+        .quadrant .hint { font-size: 12px; color: var(--text-muted); font-weight: 400; }
 
         .matrix-task {
-            padding: 8px;
-            background: #f5f5f5;
+            padding: 8px 10px;
+            background: var(--surface-2);
             margin-bottom: 8px;
             border-radius: 6px;
             font-size: 14px;
+            cursor: grab;
+            border: 1px solid var(--border);
+            overflow-wrap: anywhere;
+            transition: transform .15s var(--ease);
+        }
+        .matrix-task:hover { transform: translateX(2px); }
+        .matrix-task.dragging { opacity: .4; }
+        .matrix-task small { display: block; color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+
+        /* ========== DIALOG & TOAST ========== */
+        dialog {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+            width: min(440px, 92vw);
+            background: var(--surface);
+            color: var(--text);
+            box-shadow: var(--shadow-lg);
+            margin: auto;
+        }
+        dialog::backdrop { background: rgba(10, 12, 18, .5); backdrop-filter: blur(2px); }
+        dialog h3 { margin-bottom: 14px; }
+        dialog form { display: grid; gap: 10px; }
+        dialog label { font-size: 12px; color: var(--text-muted); display: grid; gap: 4px; }
+        .dialog-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+
+        .toasts {
+            position: fixed;
+            right: 20px; bottom: 20px;
+            display: flex; flex-direction: column; gap: 8px;
+            z-index: 50;
+            max-width: min(360px, calc(100vw - 40px));
+        }
+        .toast {
+            background: var(--text);
+            color: var(--bg);
+            padding: 12px 14px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-lg);
+            display: flex; align-items: center; gap: 12px; justify-content: space-between;
+            animation: slideIn .3s var(--ease);
+            font-size: 14px;
+        }
+        .toast button { background: transparent; color: var(--accent); font-weight: 700; padding: 2px 6px; }
+        :root[data-theme="dark"] .toast button { color: #3b5bdb; }
+        .toast.reminder { border-left: 4px solid var(--q3-dot); }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: none; }
         }
 
-        @media(max-width: 800px) {
-            .task-form {
-                grid-template-columns: 1fr;
-            }
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; transition: none !important; }
+        }
 
-            .matrix-grid {
-                grid-template-columns: 1fr;
-            }
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1000px) {
+            .task-form { grid-template-columns: 1fr 1fr; }
+            .task-form #taskInput { grid-column: 1 / -1; }
+            .task-form button[type="submit"] { grid-column: 1 / -1; }
+            .dashboard { grid-template-columns: repeat(4, 1fr); }
+            .progress-block { grid-column: 1 / -1; }
+        }
+
+        @media (max-width: 800px) {
+            body { padding: 16px; }
+            .task-form { grid-template-columns: 1fr; }
+            .matrix-grid { grid-template-columns: 1fr; }
+            .day { min-height: 54px; padding: 4px; }
+            .task { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -158,70 +502,139 @@
 
 <div class="container">
 
-    <h1>🧠 My Task Manager</h1>
+    <!-- HEADER -->
+    <header class="header">
+        <div>
+            <h1>🧠 My Task Manager</h1>
+            <p class="header-sub" id="todayLabel"></p>
+        </div>
+        <div class="toolbar">
+            <button class="ghost" id="notifyBtn" type="button" title="Bật thông báo nhắc nhở">🔔 Nhắc nhở</button>
+            <button class="ghost" id="exportBtn" type="button" title="Xuất dữ liệu ra file JSON">⬇️ Xuất</button>
+            <button class="ghost" id="importBtn" type="button" title="Nhập dữ liệu từ file JSON">⬆️ Nhập</button>
+            <button class="ghost" id="themeBtn" type="button" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện">🌓</button>
+            <input type="file" id="importFile" accept="application/json" hidden>
+        </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section class="dashboard card" aria-label="Tổng quan tiến độ">
+        <div class="progress-block">
+            <div class="label"><span>Tiến độ hoàn thành</span><strong id="progressPct">0%</strong></div>
+            <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        <div class="stat"><div class="num" id="statActive">0</div><div class="cap">Đang làm</div></div>
+        <div class="stat"><div class="num" id="statToday">0</div><div class="cap">Hôm nay</div></div>
+        <div class="stat warn"><div class="num" id="statOverdue">0</div><div class="cap">Quá hạn</div></div>
+        <div class="stat"><div class="num" id="statDone">0</div><div class="cap">Hoàn thành</div></div>
+    </section>
 
     <!-- ADD TASK -->
+    <form class="task-form card" id="taskForm" autocomplete="off">
+        <label class="sr-only" for="taskInput">Tên công việc</label>
+        <input type="text" id="taskInput" placeholder="Cần làm gì? (ví dụ: Nộp báo cáo)" maxlength="200" required>
 
-    <div class="task-form">
+        <label class="sr-only" for="dateInput">Hạn chót</label>
+        <input type="date" id="dateInput">
 
-        <input
-            type="text"
-            id="taskInput"
-            placeholder="What needs to be done?"
-        >
+        <label class="sr-only" for="timeInput">Giờ</label>
+        <input type="time" id="timeInput">
 
-        <input
-            type="date"
-            id="dateInput"
-        >
-
+        <label class="sr-only" for="urgentInput">Mức khẩn cấp</label>
         <select id="urgentInput">
-            <option value="false">Not Urgent</option>
-            <option value="true">Urgent</option>
+            <option value="false">Không khẩn cấp</option>
+            <option value="true">Khẩn cấp</option>
         </select>
 
+        <label class="sr-only" for="importantInput">Mức quan trọng</label>
         <select id="importantInput">
-            <option value="false">Not Important</option>
-            <option value="true">Important</option>
+            <option value="false">Không quan trọng</option>
+            <option value="true">Quan trọng</option>
         </select>
 
-        <button onclick="addTask()">Add</button>
+        <label class="sr-only" for="remindInput">Nhắc nhở</label>
+        <select id="remindInput">
+            <option value="-1">Không nhắc</option>
+            <option value="0">Đúng giờ</option>
+            <option value="10">Trước 10 phút</option>
+            <option value="30">Trước 30 phút</option>
+            <option value="60">Trước 1 giờ</option>
+            <option value="1440">Trước 1 ngày</option>
+        </select>
 
-    </div>
+        <button type="submit">＋ Thêm</button>
+    </form>
 
 
     <!-- ACTIVE TASKS -->
+    <div class="section-head">
+        <h2>📅 Tasks</h2>
+        <span id="dateFilterChip"></span>
+    </div>
 
-    <h2>📅 Tasks</h2>
+    <div class="list-controls">
+        <div class="tabs" role="group" aria-label="Lọc công việc" id="filterTabs">
+            <button class="tab" type="button" data-filter="active" aria-pressed="true">Đang làm</button>
+            <button class="tab" type="button" data-filter="today" aria-pressed="false">Hôm nay</button>
+            <button class="tab" type="button" data-filter="overdue" aria-pressed="false">Quá hạn</button>
+            <button class="tab" type="button" data-filter="done" aria-pressed="false">Hoàn thành</button>
+            <button class="tab" type="button" data-filter="all" aria-pressed="false">Tất cả</button>
+        </div>
+        <input type="search" id="searchInput" placeholder="🔍 Tìm kiếm..." aria-label="Tìm kiếm công việc">
+        <select id="sortInput" aria-label="Sắp xếp">
+            <option value="due">Sắp xếp: Hạn chót</option>
+            <option value="priority">Sắp xếp: Ưu tiên</option>
+            <option value="created">Sắp xếp: Mới tạo</option>
+        </select>
+    </div>
 
-    <div id="taskList" class="tasks"></div>
+    <div id="taskList" class="tasks" aria-live="polite"></div>
+
+
+    <!-- CALENDAR -->
+    <section class="calendar-section">
+        <h2>🗓️ Lịch</h2>
+        <div class="calendar card">
+            <div class="cal-head">
+                <div class="cal-title" id="calTitle"></div>
+                <div class="cal-nav">
+                    <button class="ghost" type="button" id="calPrev" aria-label="Tháng trước">‹</button>
+                    <button class="ghost" type="button" id="calToday">Hôm nay</button>
+                    <button class="ghost" type="button" id="calNext" aria-label="Tháng sau">›</button>
+                </div>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+        </div>
+    </section>
 
 
     <!-- EISENHOWER MATRIX -->
-
     <div class="matrix">
 
         <h2>⚡ Eisenhower Matrix</h2>
+        <p class="hint" style="font-size:13px;color:var(--text-muted)">Kéo & thả công việc giữa các ô để đổi mức ưu tiên.</p>
 
         <div class="matrix-grid">
 
-            <div class="quadrant">
-                <h3>🔴 Q1 — Do First</h3>
+            <div class="quadrant" data-q="q1">
+                <h3>🔴 Q1 — Làm ngay <span class="count" id="c-q1">0</span></h3>
                 <div id="q1"></div>
             </div>
 
-            <div class="quadrant">
-                <h3>🟢 Q2 — Schedule</h3>
+            <div class="quadrant" data-q="q2">
+                <h3>🟢 Q2 — Lên lịch <span class="count" id="c-q2">0</span></h3>
                 <div id="q2"></div>
             </div>
 
-            <div class="quadrant">
-                <h3>🟡 Q3 — Delegate</h3>
+            <div class="quadrant" data-q="q3">
+                <h3>🟡 Q3 — Ủy thác <span class="count" id="c-q3">0</span></h3>
                 <div id="q3"></div>
             </div>
 
-            <div class="quadrant">
-                <h3>⚪ Q4 — Eliminate</h3>
+            <div class="quadrant" data-q="q4">
+                <h3>⚪ Q4 — Loại bỏ <span class="count" id="c-q4">0</span></h3>
                 <div id="q4"></div>
             </div>
 
@@ -231,185 +644,841 @@
 
 </div>
 
+<!-- EDIT DIALOG -->
+<dialog id="editDialog" aria-labelledby="editTitle">
+    <form id="editForm" method="dialog">
+        <h3 id="editTitle">✏️ Chỉnh sửa công việc</h3>
+        <label>Tên công việc
+            <input type="text" id="editName" maxlength="200" required>
+        </label>
+        <div class="dialog-row">
+            <label>Hạn chót <input type="date" id="editDate"></label>
+            <label>Giờ <input type="time" id="editTime"></label>
+        </div>
+        <div class="dialog-row">
+            <label>Khẩn cấp
+                <select id="editUrgent"><option value="false">Không</option><option value="true">Có</option></select>
+            </label>
+            <label>Quan trọng
+                <select id="editImportant"><option value="false">Không</option><option value="true">Có</option></select>
+            </label>
+        </div>
+        <label>Nhắc nhở
+            <select id="editRemind">
+                <option value="-1">Không nhắc</option>
+                <option value="0">Đúng giờ</option>
+                <option value="10">Trước 10 phút</option>
+                <option value="30">Trước 30 phút</option>
+                <option value="60">Trước 1 giờ</option>
+                <option value="1440">Trước 1 ngày</option>
+            </select>
+        </label>
+        <div class="dialog-actions">
+            <button type="button" class="ghost" id="editCancel">Hủy</button>
+            <button type="submit">Lưu</button>
+        </div>
+    </form>
+</dialog>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
 <script>
+"use strict";
 
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+/* ==========================================================
+   CONFIG & HELPERS
+   ========================================================== */
 
+const STORE_KEY = "tasks";
+const THEME_KEY = "tm-theme";
+const DEFAULT_REMIND_TIME = "09:00";
 
-/* ADD TASK */
+const QUADRANTS = {
+    q1: { label: "Q1", urgent: true,  important: true  },
+    q2: { label: "Q2", urgent: false, important: true  },
+    q3: { label: "Q3", urgent: true,  important: false },
+    q4: { label: "Q4", urgent: false, important: false }
+};
 
-function addTask() {
+const $ = (selector, root = document) => root.querySelector(selector);
 
-    const name = document.getElementById("taskInput").value;
-    const date = document.getElementById("dateInput").value;
+/** Tạo phần tử DOM an toàn (không dùng innerHTML => chống XSS). */
+function h(tag, attrs = {}, ...children) {
+    const el = document.createElement(tag);
+    for (const [key, value] of Object.entries(attrs)) {
+        if (value == null || value === false) continue;
+        if (key === "class") el.className = value;
+        else if (key === "dataset") Object.assign(el.dataset, value);
+        else if (key.startsWith("on")) el.addEventListener(key.slice(2), value);
+        else if (value === true) el.setAttribute(key, "");
+        else el.setAttribute(key, value);
+    }
+    children.flat().forEach(child => {
+        if (child == null || child === false) return;
+        el.append(child.nodeType ? child : document.createTextNode(child));
+    });
+    return el;
+}
 
-    const urgent =
-        document.getElementById("urgentInput").value === "true";
+const pad = n => String(n).padStart(2, "0");
 
-    const important =
-        document.getElementById("importantInput").value === "true";
+/** YYYY-MM-DD theo giờ địa phương (tránh lỗi lệch múi giờ của toISOString). */
+function toDateStr(d) {
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
+const todayStr = () => toDateStr(new Date());
 
-    if (!name.trim()) {
-        alert("Please enter a task.");
+function parseDateTime(date, time) {
+    const [y, m, d] = date.split("-").map(Number);
+    const [hh, mm] = (time || "00:00").split(":").map(Number);
+    return new Date(y, m - 1, d, hh, mm);
+}
+
+function formatDate(str) {
+    if (!str) return "";
+    const [y, m, d] = str.split("-");
+    return `${d}/${m}/${y}`;
+}
+
+function daysBetween(dateStr, base = todayStr()) {
+    const a = parseDateTime(dateStr);
+    const b = parseDateTime(base);
+    return Math.round((a - b) / 86400000);
+}
+
+function relativeLabel(task) {
+    if (!task.date) return null;
+    const diff = daysBetween(task.date);
+    if (diff === 0) return { text: "Hôm nay", cls: "soon" };
+    if (diff === 1) return { text: "Ngày mai", cls: "soon" };
+    if (diff === -1) return { text: "Hôm qua", cls: "overdue" };
+    if (diff < 0) return { text: `Quá hạn ${-diff} ngày`, cls: "overdue" };
+    return { text: `Còn ${diff} ngày`, cls: "" };
+}
+
+function getQuadrant(task) {
+    if (task.urgent && task.important) return "q1";
+    if (!task.urgent && task.important) return "q2";
+    if (task.urgent && !task.important) return "q3";
+    return "q4";
+}
+
+function isOverdue(task) {
+    if (task.done || !task.date) return false;
+    if (task.time) return parseDateTime(task.date, task.time) < new Date();
+    return task.date < todayStr();
+}
+
+/* ==========================================================
+   STATE & STORAGE
+   ========================================================== */
+
+function normalizeTask(t) {
+    return {
+        id: t.id ?? Date.now() + Math.random(),
+        name: String(t.name ?? "").slice(0, 200),
+        date: t.date || "",
+        time: t.time || "",
+        urgent: Boolean(t.urgent),
+        important: Boolean(t.important),
+        done: Boolean(t.done),
+        doneAt: t.doneAt || null,
+        remind: Number.isFinite(Number(t.remind)) ? Number(t.remind) : -1,
+        reminded: Boolean(t.reminded),
+        createdAt: t.createdAt || (typeof t.id === "number" ? t.id : Date.now())
+    };
+}
+
+function loadTasks() {
+    try {
+        const raw = JSON.parse(localStorage.getItem(STORE_KEY));
+        return Array.isArray(raw) ? raw.map(normalizeTask) : [];
+    } catch {
+        return [];
+    }
+}
+
+let tasks = loadTasks();
+
+const state = {
+    filter: "active",
+    search: "",
+    sort: "due",
+    selectedDate: "",
+    calYear: new Date().getFullYear(),
+    calMonth: new Date().getMonth(),
+    editingId: null
+};
+
+function saveTasks() {
+    try {
+        localStorage.setItem(STORE_KEY, JSON.stringify(tasks));
+    } catch {
+        toast("Không thể lưu dữ liệu (bộ nhớ trình duyệt đầy hoặc bị chặn).");
+    }
+}
+
+function commit() {
+    saveTasks();
+    render();
+}
+
+/* ==========================================================
+   TASK ACTIONS
+   ========================================================== */
+
+function addTask(data) {
+    tasks.push(normalizeTask({ ...data, id: Date.now(), createdAt: Date.now() }));
+    commit();
+}
+
+function updateTask(id, patch) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    Object.assign(task, patch);
+    // Đặt lại trạng thái nhắc nếu thay đổi hạn hoặc cấu hình nhắc
+    if ("date" in patch || "time" in patch || "remind" in patch) task.reminded = false;
+    commit();
+}
+
+function toggleDone(id) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    task.done = !task.done;
+    task.doneAt = task.done ? Date.now() : null;
+    commit();
+    if (task.done) toast(`✅ Đã hoàn thành: ${task.name}`);
+}
+
+function deleteTask(id) {
+    const index = tasks.findIndex(t => t.id === id);
+    if (index === -1) return;
+    const [removed] = tasks.splice(index, 1);
+    commit();
+    toast(`Đã xóa "${removed.name}"`, {
+        actionLabel: "Hoàn tác",
+        onAction: () => {
+            tasks.splice(index, 0, removed);
+            commit();
+        }
+    });
+}
+
+/* ==========================================================
+   FILTER / SORT
+   ========================================================== */
+
+function getVisibleTasks() {
+    const today = todayStr();
+    const query = state.search.trim().toLowerCase();
+
+    let list = tasks.filter(task => {
+        if (state.selectedDate && task.date !== state.selectedDate) return false;
+        if (query && !task.name.toLowerCase().includes(query)) return false;
+
+        switch (state.filter) {
+            case "active":  return !task.done;
+            case "today":   return !task.done && task.date === today;
+            case "overdue": return isOverdue(task);
+            case "done":    return task.done;
+            default:        return true;
+        }
+    });
+
+    const dueValue = t => t.date ? parseDateTime(t.date, t.time || "23:59").getTime() : Infinity;
+
+    list.sort((a, b) => {
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        if (state.sort === "priority") {
+            const order = getQuadrant(a).localeCompare(getQuadrant(b));
+            return order || dueValue(a) - dueValue(b);
+        }
+        if (state.sort === "created") return b.createdAt - a.createdAt;
+        const diff = dueValue(a) - dueValue(b);
+        return diff === 0 ? 0 : (diff < 0 ? -1 : 1);
+    });
+
+    return list;
+}
+
+/* ==========================================================
+   RENDER
+   ========================================================== */
+
+function renderStats() {
+    const today = todayStr();
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    const active = total - done;
+    const todayCount = tasks.filter(t => !t.done && t.date === today).length;
+    const overdue = tasks.filter(isOverdue).length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+
+    $("#statActive").textContent = active;
+    $("#statToday").textContent = todayCount;
+    $("#statOverdue").textContent = overdue;
+    $("#statDone").textContent = done;
+    $("#progressPct").textContent = `${pct}%`;
+    $("#progressFill").style.width = `${pct}%`;
+    $("#progressBar").setAttribute("aria-valuenow", pct);
+
+    document.title = overdue ? `(${overdue}) Task Manager` : "Task Manager";
+}
+
+function renderFilters() {
+    document.querySelectorAll(".tab").forEach(tab => {
+        tab.setAttribute("aria-pressed", String(tab.dataset.filter === state.filter));
+    });
+
+    const chipHost = $("#dateFilterChip");
+    chipHost.replaceChildren();
+    if (state.selectedDate) {
+        chipHost.append(
+            h("span", { class: "chip-filter" },
+                `📌 ${formatDate(state.selectedDate)}`,
+                h("button", {
+                    type: "button",
+                    "aria-label": "Bỏ lọc theo ngày",
+                    onclick: () => { state.selectedDate = ""; render(); }
+                }, "×")
+            )
+        );
+    }
+}
+
+function buildTaskElement(task) {
+    const quadrant = getQuadrant(task);
+    const rel = relativeLabel(task);
+
+    const dateInfo = h("div", { class: "date" },
+        h("span", {}, `📅 ${task.date ? formatDate(task.date) : "Không có hạn"}`),
+        task.time ? h("span", {}, `⏰ ${task.time}`) : null,
+        rel && !task.done ? h("span", { class: rel.cls }, rel.text) : null,
+        task.remind >= 0 && task.date ? h("span", { title: "Có nhắc nhở" }, "🔔") : null
+    );
+
+    return h("div", { class: `task${task.done ? " done" : ""}`, dataset: { id: task.id, q: quadrant } },
+        h("input", {
+            type: "checkbox",
+            checked: task.done,
+            "aria-label": `Hoàn thành: ${task.name}`,
+            onchange: () => toggleDone(task.id)
+        }),
+        h("div", { class: "task-info" },
+            h("div", { class: "task-name" }, task.name),
+            dateInfo
+        ),
+        h("span", { class: `priority ${quadrant}` }, quadrant.toUpperCase()),
+        h("div", { class: "task-actions" },
+            h("button", {
+                class: "icon", type: "button", title: "Chỉnh sửa", "aria-label": "Chỉnh sửa",
+                onclick: () => openEdit(task.id)
+            }, "✏️"),
+            h("button", {
+                class: "icon danger", type: "button", title: "Xóa", "aria-label": "Xóa",
+                onclick: () => deleteTask(task.id)
+            }, "🗑️")
+        )
+    );
+}
+
+function renderTasks() {
+    const list = $("#taskList");
+    const visible = getVisibleTasks();
+    list.replaceChildren();
+
+    if (!visible.length) {
+        const message = tasks.length
+            ? "Không có công việc nào khớp bộ lọc."
+            : "Chưa có công việc nào. Hãy thêm việc đầu tiên của bạn!";
+        list.append(h("div", { class: "empty" },
+            h("div", { class: "big" }, tasks.length ? "🔎" : "🌱"),
+            message
+        ));
         return;
     }
 
-
-    const task = {
-
-        id: Date.now(),
-
-        name: name,
-
-        date: date,
-
-        urgent: urgent,
-
-        important: important
-
-    };
-
-
-    tasks.push(task);
-
-    saveTasks();
-
-    render();
-
-
-    document.getElementById("taskInput").value = "";
-
+    const fragment = document.createDocumentFragment();
+    visible.forEach(task => fragment.append(buildTaskElement(task)));
+    list.append(fragment);
 }
 
+function renderCalendar() {
+    const grid = $("#calGrid");
+    grid.replaceChildren();
 
-/* DETERMINE QUADRANT */
+    const first = new Date(state.calYear, state.calMonth, 1);
+    $("#calTitle").textContent = first.toLocaleDateString("vi-VN", { month: "long", year: "numeric" });
 
-function getQuadrant(task) {
-
-    if (task.urgent && task.important)
-        return "q1";
-
-    if (!task.urgent && task.important)
-        return "q2";
-
-    if (task.urgent && !task.important)
-        return "q3";
-
-    return "q4";
-
-}
-
-
-/* COMPLETE TASK */
-
-function completeTask(id) {
-
-    tasks = tasks.filter(task => task.id !== id);
-
-    saveTasks();
-
-    render();
-
-}
-
-
-/* SAVE */
-
-function saveTasks() {
-
-    localStorage.setItem(
-        "tasks",
-        JSON.stringify(tasks)
+    ["T2", "T3", "T4", "T5", "T6", "T7", "CN"].forEach(d =>
+        grid.append(h("div", { class: "dow" }, d))
     );
 
-}
+    // Tuần bắt đầu từ Thứ Hai
+    const offset = (first.getDay() + 6) % 7;
+    const start = new Date(state.calYear, state.calMonth, 1 - offset);
+    const today = todayStr();
 
-
-/* RENDER */
-
-function render() {
-
-    const taskList =
-        document.getElementById("taskList");
-
-
-    taskList.innerHTML = "";
-
-
-    document.getElementById("q1").innerHTML = "";
-    document.getElementById("q2").innerHTML = "";
-    document.getElementById("q3").innerHTML = "";
-    document.getElementById("q4").innerHTML = "";
-
-
-    tasks.forEach(task => {
-
-        const quadrant =
-            getQuadrant(task);
-
-
-        /* TASK LIST */
-
-        const taskElement =
-            document.createElement("div");
-
-        taskElement.className = "task";
-
-
-        taskElement.innerHTML = `
-
-            <input
-                type="checkbox"
-                onchange="completeTask(${task.id})"
-            >
-
-            <div class="task-info">
-
-                <div class="task-name">
-                    ${task.name}
-                </div>
-
-                <div class="date">
-                    📅 ${task.date || "No deadline"}
-                </div>
-
-            </div>
-
-            <span class="priority ${quadrant}">
-                ${quadrant.toUpperCase()}
-            </span>
-
-        `;
-
-
-        taskList.appendChild(taskElement);
-
-
-        /* MATRIX */
-
-        const matrixTask =
-            document.createElement("div");
-
-        matrixTask.className =
-            "matrix-task";
-
-        matrixTask.textContent =
-            task.name;
-
-
-        document
-            .getElementById(quadrant)
-            .appendChild(matrixTask);
-
+    const byDate = new Map();
+    tasks.filter(t => !t.done && t.date).forEach(t => {
+        if (!byDate.has(t.date)) byDate.set(t.date, []);
+        byDate.get(t.date).push(t);
     });
 
+    for (let i = 0; i < 42; i++) {
+        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+        const dateStr = toDateStr(d);
+        const items = byDate.get(dateStr) || [];
+
+        const classes = ["day"];
+        if (d.getMonth() !== state.calMonth) classes.push("out");
+        if (dateStr === today) classes.push("today");
+        if (dateStr === state.selectedDate) classes.push("selected");
+
+        const dots = h("div", { class: "dots" },
+            items.slice(0, 4).map(t => h("span", { class: `dot ${getQuadrant(t)}` })),
+            items.length > 4 ? h("span", { class: "more" }, `+${items.length - 4}`) : null
+        );
+
+        grid.append(
+            h("button", {
+                type: "button",
+                class: classes.join(" "),
+                "aria-label": `${formatDate(dateStr)}, ${items.length} công việc`,
+                "aria-pressed": String(dateStr === state.selectedDate),
+                onclick: () => selectDate(dateStr)
+            },
+                h("span", { class: "dnum" }, d.getDate()),
+                dots
+            )
+        );
+    }
 }
 
+function renderMatrix() {
+    const buckets = { q1: [], q2: [], q3: [], q4: [] };
+    tasks.filter(t => !t.done).forEach(t => buckets[getQuadrant(t)].push(t));
 
+    Object.entries(buckets).forEach(([q, items]) => {
+        const host = $(`#${q}`);
+        host.replaceChildren();
+        $(`#c-${q}`).textContent = items.length;
+
+        if (!items.length) {
+            host.append(h("div", { class: "hint", style: "color:var(--text-muted);font-size:13px" }, "Trống"));
+            return;
+        }
+
+        items.forEach(task => {
+            const item = h("div", {
+                class: "matrix-task",
+                draggable: "true",
+                dataset: { id: task.id },
+                ondragstart: e => {
+                    e.dataTransfer.setData("text/plain", String(task.id));
+                    e.dataTransfer.effectAllowed = "move";
+                    item.classList.add("dragging");
+                },
+                ondragend: () => item.classList.remove("dragging")
+            },
+                task.name,
+                task.date ? h("small", {}, `📅 ${formatDate(task.date)}${task.time ? " · " + task.time : ""}`) : null
+            );
+            host.append(item);
+        });
+    });
+}
+
+function render() {
+    renderStats();
+    renderFilters();
+    renderTasks();
+    renderCalendar();
+    renderMatrix();
+}
+
+/* ==========================================================
+   CALENDAR INTERACTION
+   ========================================================== */
+
+function selectDate(dateStr) {
+    state.selectedDate = state.selectedDate === dateStr ? "" : dateStr;
+    if (state.selectedDate) {
+        $("#dateInput").value = dateStr;
+        if (state.filter === "today" || state.filter === "overdue") state.filter = "all";
+    }
+    render();
+}
+
+function shiftMonth(delta) {
+    const d = new Date(state.calYear, state.calMonth + delta, 1);
+    state.calYear = d.getFullYear();
+    state.calMonth = d.getMonth();
+    renderCalendar();
+}
+
+$("#calPrev").addEventListener("click", () => shiftMonth(-1));
+$("#calNext").addEventListener("click", () => shiftMonth(1));
+$("#calToday").addEventListener("click", () => {
+    const now = new Date();
+    state.calYear = now.getFullYear();
+    state.calMonth = now.getMonth();
+    renderCalendar();
+});
+
+/* ==========================================================
+   FORM: ADD
+   ========================================================== */
+
+$("#taskForm").addEventListener("submit", e => {
+    e.preventDefault();
+
+    const name = $("#taskInput").value.trim();
+    if (!name) {
+        toast("Vui lòng nhập tên công việc.");
+        $("#taskInput").focus();
+        return;
+    }
+
+    const date = $("#dateInput").value;
+    const remind = Number($("#remindInput").value);
+
+    if (remind >= 0 && !date) {
+        toast("Hãy chọn ngày hạn chót để dùng nhắc nhở.");
+        $("#dateInput").focus();
+        return;
+    }
+
+    addTask({
+        name,
+        date,
+        time: $("#timeInput").value,
+        urgent: $("#urgentInput").value === "true",
+        important: $("#importantInput").value === "true",
+        remind
+    });
+
+    $("#taskInput").value = "";
+    $("#timeInput").value = "";
+    $("#taskInput").focus();
+
+    if (remind >= 0) ensureNotificationPermission();
+});
+
+/* ==========================================================
+   FORM: EDIT (DIALOG)
+   ========================================================== */
+
+const editDialog = $("#editDialog");
+
+function openEdit(id) {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    state.editingId = id;
+
+    $("#editName").value = task.name;
+    $("#editDate").value = task.date;
+    $("#editTime").value = task.time;
+    $("#editUrgent").value = String(task.urgent);
+    $("#editImportant").value = String(task.important);
+    $("#editRemind").value = String(task.remind);
+
+    editDialog.showModal();
+    $("#editName").focus();
+}
+
+$("#editForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = $("#editName").value.trim();
+    if (!name || state.editingId == null) return;
+
+    const date = $("#editDate").value;
+    const remind = Number($("#editRemind").value);
+
+    updateTask(state.editingId, {
+        name,
+        date,
+        time: $("#editTime").value,
+        urgent: $("#editUrgent").value === "true",
+        important: $("#editImportant").value === "true",
+        remind: date ? remind : -1
+    });
+
+    state.editingId = null;
+    editDialog.close();
+    if (remind >= 0 && date) ensureNotificationPermission();
+});
+
+$("#editCancel").addEventListener("click", () => editDialog.close());
+
+editDialog.addEventListener("click", e => {
+    if (e.target === editDialog) editDialog.close();
+});
+
+/* ==========================================================
+   FILTER / SEARCH / SORT EVENTS
+   ========================================================== */
+
+$("#filterTabs").addEventListener("click", e => {
+    const tab = e.target.closest(".tab");
+    if (!tab) return;
+    state.filter = tab.dataset.filter;
+    render();
+});
+
+$("#searchInput").addEventListener("input", debounce(e => {
+    state.search = e.target.value;
+    renderTasks();
+}, 150));
+
+$("#sortInput").addEventListener("change", e => {
+    state.sort = e.target.value;
+    renderTasks();
+});
+
+function debounce(fn, wait) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), wait);
+    };
+}
+
+/* ==========================================================
+   DRAG & DROP (EISENHOWER MATRIX)
+   ========================================================== */
+
+document.querySelectorAll(".quadrant").forEach(zone => {
+    zone.addEventListener("dragover", e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        zone.classList.add("drag-over");
+    });
+
+    zone.addEventListener("dragleave", e => {
+        if (!zone.contains(e.relatedTarget)) zone.classList.remove("drag-over");
+    });
+
+    zone.addEventListener("drop", e => {
+        e.preventDefault();
+        zone.classList.remove("drag-over");
+        const id = Number(e.dataTransfer.getData("text/plain"));
+        const target = QUADRANTS[zone.dataset.q];
+        const task = tasks.find(t => t.id === id);
+        if (!task || !target) return;
+        if (getQuadrant(task) === zone.dataset.q) return;
+        updateTask(id, { urgent: target.urgent, important: target.important });
+    });
+});
+
+/* ==========================================================
+   REMINDERS
+   ========================================================== */
+
+const notifyBtn = $("#notifyBtn");
+
+function updateNotifyButton() {
+    if (!("Notification" in window)) {
+        notifyBtn.textContent = "🔕 Không hỗ trợ";
+        notifyBtn.disabled = true;
+        return;
+    }
+    const map = {
+        granted: "🔔 Đã bật nhắc nhở",
+        denied: "🔕 Bị chặn",
+        default: "🔔 Bật nhắc nhở"
+    };
+    notifyBtn.textContent = map[Notification.permission] || map.default;
+}
+
+async function ensureNotificationPermission() {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "default") {
+        try { await Notification.requestPermission(); } catch { /* bỏ qua */ }
+        updateNotifyButton();
+    }
+}
+
+notifyBtn.addEventListener("click", async () => {
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "denied") {
+        toast("Thông báo đang bị chặn. Hãy cho phép trong cài đặt trình duyệt.");
+        return;
+    }
+    await ensureNotificationPermission();
+    if (Notification.permission === "granted") {
+        toast("🔔 Đã bật nhắc nhở. Bạn sẽ nhận thông báo khi tới hạn.");
+    }
+});
+
+function checkReminders() {
+    const now = Date.now();
+    let changed = false;
+
+    tasks.forEach(task => {
+        if (task.done || task.reminded || task.remind < 0 || !task.date) return;
+
+        const due = parseDateTime(task.date, task.time || DEFAULT_REMIND_TIME).getTime();
+        const fireAt = due - task.remind * 60000;
+        if (now < fireAt) return;
+
+        task.reminded = true;
+        changed = true;
+
+        // Bỏ qua thông báo nếu đã quá hạn hơn 24 giờ (tránh spam khi mở lại trang)
+        if (now - due > 86400000) return;
+
+        const when = task.time ? `${formatDate(task.date)} lúc ${task.time}` : formatDate(task.date);
+        const message = `⏰ ${task.name} — hạn ${when}`;
+        toast(message, { type: "reminder", duration: 12000 });
+
+        if ("Notification" in window && Notification.permission === "granted") {
+            try { new Notification("Nhắc nhở công việc", { body: `${task.name}\nHạn: ${when}` }); } catch { /* bỏ qua */ }
+        }
+    });
+
+    if (changed) saveTasks();
+    renderStats();
+}
+
+setInterval(checkReminders, 30000);
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) { checkReminders(); render(); }
+});
+
+/* ==========================================================
+   TOASTS
+   ========================================================== */
+
+function toast(message, { actionLabel, onAction, type, duration = 5000 } = {}) {
+    const host = $("#toasts");
+    const el = h("div", { class: `toast${type ? " " + type : ""}` }, h("span", {}, message));
+
+    const remove = () => el.remove();
+
+    if (actionLabel && onAction) {
+        el.append(h("button", {
+            type: "button",
+            onclick: () => { onAction(); remove(); }
+        }, actionLabel));
+    }
+
+    host.append(el);
+    setTimeout(remove, duration);
+}
+
+/* ==========================================================
+   THEME
+   ========================================================== */
+
+function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+}
+
+function initTheme() {
+    let saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch { /* bỏ qua */ }
+    const preferDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    applyTheme(saved || (preferDark ? "dark" : "light"));
+}
+
+$("#themeBtn").addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem(THEME_KEY, next); } catch { /* bỏ qua */ }
+});
+
+/* ==========================================================
+   EXPORT / IMPORT
+   ========================================================== */
+
+$("#exportBtn").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = h("a", { href: url, download: `tasks-${todayStr()}.json` });
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast("⬇️ Đã xuất dữ liệu.");
+});
+
+$("#importBtn").addEventListener("click", () => $("#importFile").click());
+
+$("#importFile").addEventListener("change", async e => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+
+    try {
+        const data = JSON.parse(await file.text());
+        if (!Array.isArray(data)) throw new Error("invalid");
+
+        const existing = new Set(tasks.map(t => t.id));
+        const incoming = data
+            .filter(t => t && typeof t.name === "string" && t.name.trim())
+            .map(normalizeTask)
+            .filter(t => !existing.has(t.id));
+
+        tasks = tasks.concat(incoming);
+        commit();
+        toast(`⬆️ Đã nhập ${incoming.length} công việc.`);
+    } catch {
+        toast("File không hợp lệ. Vui lòng chọn file JSON đã xuất từ ứng dụng.");
+    }
+});
+
+/* ==========================================================
+   KEYBOARD SHORTCUTS
+   ========================================================== */
+
+document.addEventListener("keydown", e => {
+    const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+    if (e.key === "/" && !typing && !editDialog.open) {
+        e.preventDefault();
+        $("#searchInput").focus();
+    }
+    if (e.key === "n" && !typing && !editDialog.open && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        $("#taskInput").focus();
+    }
+});
+
+/* ==========================================================
+   INIT
+   ========================================================== */
+
+function initHeaderDate() {
+    const text = new Date().toLocaleDateString("vi-VN", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric"
+    });
+    $("#todayLabel").textContent = text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+initTheme();
+initHeaderDate();
+updateNotifyButton();
 render();
+checkReminders();
 
+// Cập nhật khi qua ngày mới
+let lastDay = todayStr();
+setInterval(() => {
+    if (todayStr() !== lastDay) {
+        lastDay = todayStr();
+        initHeaderDate();
+        render();
+    }
+}, 60000);
+
+// Đồng bộ giữa nhiều tab
+window.addEventListener("storage", e => {
+    if (e.key === STORE_KEY) {
+        tasks = loadTasks();
+        render();
+    }
+});
 </script>
 
 </body>
